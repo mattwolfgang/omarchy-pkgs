@@ -1,6 +1,6 @@
 {
   "files": {
-    "CMakeLists.txt": "7b07a2d627035ce633333d1a23755196758937a0df374be8e1cd026acc8e9936",
+    "CMakeLists.txt": "be5a67cf11bdd3195082e8b4225b1cd9c9bfe7fd66572a6aa5774c654b72f7f1",
     "LICENSE.md": "c0779290c1d4783169aa3dbfb55feb505e563ef8a004bbf55298ceffcfbda8d9",
     "SOURCE-PROVENANCE.json": "292ac8fa09bec96cbd499d5d57cc8ea9b1c00fe6347162fb6960c45f972bdb9d",
     "cmake/DetectHyprlandAPI.cmake": "216133ec0eb141c3696bf3770a23e63e46521c9e91a0245a7cb75c20a75ba2c5",
@@ -10,6 +10,8 @@
     "include/cua_hyprland/status.hpp": "56a9656647c0f4eeb0c588cd4b98a77df198d1f90421f973e9a80e6802f61495",
     "src/drag_geometry.hpp": "c5b783d15ff197f22938f08f8d176bab5d45544fe989d150f15cb99295acedb8",
     "src/foreground_route.hpp": "4544bb0086137aa8de71e9233832ffd021f2207921c4b788484396a3c9b9c9ef",
+    "src/ime_popup_guard.cpp": "7a15a88a45866559206d83b0eb6dbd4b9ece9025ded07bfea90a726ebd05cec0",
+    "src/ime_popup_guard.hpp": "71e6cfa650b755f78d4593adc0ee5cab340c3c277ea4540c2b1e08a6b28ff276",
     "src/inject_server.cpp": "0935283580c50fcf0e4ad956f858885700536002b1d86d2f078da9c4404ee9e8",
     "src/inject_server.hpp": "67de008b4d6983371207bb22a57bab154b1dedda9b38d1207d3ac8cb379382eb",
     "src/input_client_deadline.hpp": "00a91a789ff698820607449ff7152e2fb50d0f315e0fa9c5c3855752bfffe2ef",
@@ -19,7 +21,7 @@
     "src/keymap_equivalence.hpp": "29b929e8f12da686ddd1c438285cf635847dc121b7e19871de50ebb550d802b9",
     "src/owned_socket_path.hpp": "8e784656d944c700f3ded383c93a8cadf846dabdaa4cc12673bcb637c26d9fd1",
     "src/passive_pointer_target.hpp": "ede36fd9fd6e95ae5923c751f12591084392be9d2270eb06ad64eb4f245169fa",
-    "src/plugin.cpp": "1f5b065e556578ef6dbf504eb646a62285ea4066d99ea5b3b2b61c1dd1b5c232",
+    "src/plugin.cpp": "763a04135a6b525f7d1e6fa65400998454757131da062121507eae82e1c9db82",
     "src/primary_trace.cpp": "e9468d1a3f3be2a90d47bf8c4a638ad8a60fe10b6297582ab7825751cb707aa9",
     "src/primary_trace.hpp": "8d62535fb0b24a02bb80d9a8dcd540b39204afb2f3b4bcb5cabd5275c3b5eaa7",
     "src/protocol.cpp": "bd083d65efb05e80946566dc535b1a6fadaa581c66ec327eff41796feba795b1",
@@ -51,7 +53,7 @@
     "tests/transport_test.cpp": "deef114a950a27eaff0a530165ddf7db0bfc0fe7e8fb55bdbb66135c8e0c04c9",
     "verify.py": "fb35d62313ff4661f892f88666919b33b160f8b6d4fb2d5d52610708bf7f4a54"
   },
-  "patch_sha256": "3e35313c28eb507ec5139f67b24fc0057bb7cf651f13d4b7f01176fe6005cc33",
+  "patch_sha256": "87d3f560cfbd195748321a7e7ad2cb921c77cc022877de7890d3a711940f6e3c",
   "schema": 1,
   "upstream_manifest_sha256": "292ac8fa09bec96cbd499d5d57cc8ea9b1c00fe6347162fb6960c45f972bdb9d",
   "upstream_revision": "58aba84b5b83d77e7e2b0f006547699eb594e50d"

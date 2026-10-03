@@ -1,3 +1,103 @@
+diff -ruN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -244,7 +244,8 @@
+             "Hyprland headers expose no supported hyprctl plugin command API")
+     endif()
+ 
+-    add_library(cua_hyprland_plugin MODULE src/plugin.cpp)
++    add_library(cua_hyprland_plugin MODULE src/plugin.cpp src/ime_popup_guard.cpp)
++    target_compile_definitions(cua_hyprland_plugin PRIVATE CUA_HYPRLAND_IME_POPUP_GUARD=1)
+     if(CUA_HYPRLAND_TEST_INPUT OR CUA_HYPRLAND_INPUT)
+         if(NOT HYPRLAND_VERSION STREQUAL "0.56.2")
+             message(FATAL_ERROR "Input is pinned to Hyprland 0.56.2")
+diff -ruN a/src/ime_popup_guard.cpp b/src/ime_popup_guard.cpp
+--- a/src/ime_popup_guard.cpp
++++ b/src/ime_popup_guard.cpp
+@@ -0,0 +1,69 @@
++#include "ime_popup_guard.hpp"
++
++#include <src/managers/input/InputMethodPopup.hpp>
++#include <src/plugins/PluginAPI.hpp>
++#include <src/protocols/core/Compositor.hpp>
++
++namespace cua::hyprland {
++namespace {
++
++void* g_plugin = nullptr;
++CFunctionHook* g_update_box = nullptr;
++CFunctionHook* g_should_be_rendered = nullptr;
++
++// Hyprland 0.56.2 leaves an input-method popup mapped after its wl_surface is
++// destroyed, then places and renders it through the missing surface. fcitx5
++// registers an input method per wl_seat, which is how the agent seats make that
++// order reachable when it exits. A popup without a surface is neither placed
++// nor rendered.
++void guarded_update_box(void* popup) {
++    if (!static_cast<CInputPopup*>(popup)->getSurface())
++        return;
++    reinterpret_cast<void (*)(void*)>(g_update_box->m_original)(popup);
++}
++
++bool guarded_should_be_rendered(void* popup) {
++    if (!static_cast<CInputPopup*>(popup)->getSurface())
++        return false;
++    return reinterpret_cast<bool (*)(void*)>(g_should_be_rendered->m_original)(popup);
++}
++
++CFunctionHook* hook_exact(void* plugin, const std::string& symbol, void* replacement) {
++    const auto matches = HyprlandAPI::findFunctionsByName(plugin, symbol);
++    if (matches.size() != 1)
++        return nullptr;
++    auto* hook = HyprlandAPI::createFunctionHook(plugin, matches.front().address, replacement);
++    if (hook && !hook->hook()) {
++        HyprlandAPI::removeFunctionHook(plugin, hook);
++        return nullptr;
++    }
++    return hook;
++}
++
++} // namespace
++
++bool install_ime_popup_guard(void* plugin) {
++    if (ime_popup_guard_active())
++        return true;
++    g_plugin = plugin;
++    g_update_box = hook_exact(plugin, "_ZN11CInputPopup9updateBoxEv", reinterpret_cast<void*>(&guarded_update_box));
++    g_should_be_rendered = hook_exact(plugin, "_ZN11CInputPopup16shouldBeRenderedEv",
++        reinterpret_cast<void*>(&guarded_should_be_rendered));
++    if (!ime_popup_guard_active())
++        remove_ime_popup_guard();
++    return ime_popup_guard_active();
++}
++
++void remove_ime_popup_guard() {
++    for (auto* hook : {g_update_box, g_should_be_rendered})
++        if (hook)
++            HyprlandAPI::removeFunctionHook(g_plugin, hook);
++    g_update_box = g_should_be_rendered = nullptr;
++    g_plugin = nullptr;
++}
++
++bool ime_popup_guard_active() {
++    return g_update_box && g_should_be_rendered;
++}
++
++} // namespace cua::hyprland
+diff -ruN a/src/ime_popup_guard.hpp b/src/ime_popup_guard.hpp
+--- a/src/ime_popup_guard.hpp
++++ b/src/ime_popup_guard.hpp
+@@ -0,0 +1,10 @@
++#pragma once
++
++namespace cua::hyprland {
++
++// Installs the guard described in ime_popup_guard.cpp. Returns whether it is active.
++bool install_ime_popup_guard(void* plugin);
++void remove_ime_popup_guard();
++bool ime_popup_guard_active();
++
++} // namespace cua::hyprland
 diff -ruN a/src/input_experiment.cpp b/src/input_experiment.cpp
 --- a/src/input_experiment.cpp
 +++ b/src/input_experiment.cpp
@@ -89,6 +189,53 @@ diff -ruN a/src/keymap_equivalence.hpp b/src/keymap_equivalence.hpp
 +}
 +
  } // namespace cua::hyprland
+diff -ruN a/src/plugin.cpp b/src/plugin.cpp
+--- a/src/plugin.cpp
++++ b/src/plugin.cpp
+@@ -2,6 +2,9 @@
+ #if defined(CUA_HYPRLAND_TEST_INPUT) || defined(CUA_HYPRLAND_INPUT)
+ #include "input_experiment.hpp"
+ #endif
++#ifdef CUA_HYPRLAND_IME_POPUP_GUARD
++#include "ime_popup_guard.hpp"
++#endif
+ 
+ #include "cua_hyprland/protocol.hpp"
+ #include "cua_hyprland/status.hpp"
+@@ -230,6 +233,11 @@
+         result.pop_back();
+         result += R"(,"keyboard_layout_independent":true,"foreground_numlock_compatible":true})";
+ #endif
++#ifdef CUA_HYPRLAND_IME_POPUP_GUARD
++        // Whether the input-method popup guard is hooked into this compositor.
++        result.pop_back();
++        result += cua::hyprland::ime_popup_guard_active() ? R"(,"ime_popup_guard":true})" : R"(,"ime_popup_guard":false})";
++#endif
+ #if defined(CUA_HYPRLAND_TEST_INPUT) || defined(CUA_HYPRLAND_INPUT)
+         if (g_experiment) {
+ #ifdef CUA_HYPRLAND_INPUT
+@@ -341,6 +349,11 @@
+         }
+     });
+ 
++#ifdef CUA_HYPRLAND_IME_POPUP_GUARD
++    // Best effort: without the hook the plugin still works, and status says so.
++    static_cast<void>(cua::hyprland::install_ime_popup_guard(handle));
++#endif
++
+     return {
+         "cua-hyprland-plugin",
+         "Discovery foundation for isolated background computer use",
+@@ -351,6 +364,9 @@
+ 
+ APICALL EXPORT void PLUGIN_EXIT() {
+     g_config_listener.reset();
++#ifdef CUA_HYPRLAND_IME_POPUP_GUARD
++    cua::hyprland::remove_ime_popup_guard();
++#endif
+ #if defined(CUA_HYPRLAND_TEST_INPUT) || defined(CUA_HYPRLAND_INPUT)
+     // Retire input directly so an in-flight action receives plugin_shutdown,
+     // not the config-disable reason from stop_server()'s suspend path.
 diff -ruN a/tests/keymap_equivalence_test.cpp b/tests/keymap_equivalence_test.cpp
 --- a/tests/keymap_equivalence_test.cpp
 +++ b/tests/keymap_equivalence_test.cpp

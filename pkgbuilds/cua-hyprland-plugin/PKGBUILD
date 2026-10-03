@@ -1,4 +1,4 @@
-# Verified upstream kit plus a separately pinned Omarchy foreground-remap patch.
+# Verified upstream kit plus a separately pinned Omarchy patch.
 # Normal reruns need a fresh build directory; makepkg -e reuses verified extracted trees.
 # Profile kit: original source bytes and separately committed packaging tooling.
 # shellcheck shell=bash disable=SC2034,SC2154
@@ -31,13 +31,13 @@ sha256sums=('a89bfa7f6490f598719dfabdd2a5badc137e27b0764fd25e6a05e1f969433520'
 
 # Downstream inputs are also checked explicitly when makepkg integrity is skipped.
 declare -gA _downstream_sha256=(
-  ['foreground-remaps.patch']='3e35313c28eb507ec5139f67b24fc0057bb7cf651f13d4b7f01176fe6005cc33'
-  ['DOWNSTREAM-PROVENANCE.json']='1a5761b5c8fe5cac65ff69c428ae1dc31b494ac9931586d1d0c18b7abfaaa957'
+  ['downstream.patch']='87d3f560cfbd195748321a7e7ad2cb921c77cc022877de7890d3a711940f6e3c'
+  ['DOWNSTREAM-PROVENANCE.json']='814e136f4684886107b5ccfa7ffc773a1ad0cea7dcddebd977c6f35c6e87ce00'
   ['downstream.py']='7c9725805ad038737bd4d346c85f27991ce9ddfff436a32ebf515cad1bf98ca1'
   ['downstream_test.py']='7b9a992979b22a5e061fdf011ac6be59a3f1ae6e0d7c0a8ff631f74e71984c5a'
 )
-source+=('foreground-remaps.patch' 'DOWNSTREAM-PROVENANCE.json' 'downstream.py' 'downstream_test.py')
-sha256sums+=('3e35313c28eb507ec5139f67b24fc0057bb7cf651f13d4b7f01176fe6005cc33' '1a5761b5c8fe5cac65ff69c428ae1dc31b494ac9931586d1d0c18b7abfaaa957' '7c9725805ad038737bd4d346c85f27991ce9ddfff436a32ebf515cad1bf98ca1' '7b9a992979b22a5e061fdf011ac6be59a3f1ae6e0d7c0a8ff631f74e71984c5a')
+source+=('downstream.patch' 'DOWNSTREAM-PROVENANCE.json' 'downstream.py' 'downstream_test.py')
+sha256sums+=('87d3f560cfbd195748321a7e7ad2cb921c77cc022877de7890d3a711940f6e3c' '814e136f4684886107b5ccfa7ffc773a1ad0cea7dcddebd977c6f35c6e87ce00' '7c9725805ad038737bd4d346c85f27991ce9ddfff436a32ebf515cad1bf98ca1' '7b9a992979b22a5e061fdf011ac6be59a3f1ae6e0d7c0a8ff631f74e71984c5a')
 
 _verify_download() {
   python3 -I - "$SRCDEST/$_download_name" "$_download_sha256" "$srcdir" "$1" "$SRCDEST/PROFILE.json" \
@@ -175,12 +175,12 @@ _verify() {
 
 _downstream() {
   local name
-  for name in foreground-remaps.patch DOWNSTREAM-PROVENANCE.json downstream.py downstream_test.py; do
+  for name in downstream.patch DOWNSTREAM-PROVENANCE.json downstream.py downstream_test.py; do
     printf '%s  %s\n' "${_downstream_sha256[$name]}" "$SRCDEST/$name" | sha256sum -c - || return 1
   done
   python3 -B "$SRCDEST/downstream.py" "$1" \
     --pristine "$srcdir/$_stem" --source "$srcdir/omarchy-source" \
-    --patch "$SRCDEST/foreground-remaps.patch" --manifest "$SRCDEST/DOWNSTREAM-PROVENANCE.json" \
+    --patch "$SRCDEST/downstream.patch" --manifest "$SRCDEST/DOWNSTREAM-PROVENANCE.json" \
     --kit "$srcdir/cua-profile-kit" --kit-sha256 "$_kit_sha256" \
     --archive "$srcdir/cua-profile-kit/${_stem}.tar.gz" --cxx "$_cxx" "${@:2}"
 }
@@ -229,7 +229,7 @@ package() {
   for name in KIT-PROVENANCE.json PROFILE.json profile_verify.py; do
     install -Dm644 "$srcdir/cua-profile-kit/$name" "$pkgdir/usr/share/$pkgname/$name" || return 1
   done
-  for name in DOWNSTREAM-PROVENANCE.json foreground-remaps.patch; do
+  for name in DOWNSTREAM-PROVENANCE.json downstream.patch; do
     install -Dm644 "$SRCDEST/$name" "$pkgdir/usr/share/$pkgname/$name" || return 1
   done
 }
