@@ -1,6 +1,6 @@
 # Optional Cua Hyprland plugin
 
-This package targets **Omarchy x86_64**, with Inkscape `1.4.4-6` and two independent background-input lanes. Release `0.32.0-3` is an edge candidate built from the plugin source published with Driver `0.32.0`, paired with `cua-driver-bin` `0.28.2`. That source carries the independent agent keymaps and compatible Num Lock handling that releases `0.26.1-5` through `0.28.2-2` applied as an Omarchy patch; this release applies a smaller one, `downstream.patch`, so foreground typing keeps working with modifier and Compose remaps (see *Keyboard behavior*) and so restarting fcitx5 cannot crash Hyprland (see *Input-method popups*). The upstream native qualification below covers older, unpatched source. Cua's native qualification is recorded in [the kit's qualification record](https://github.com/trycua/cua/releases/download/cua-hyprland-kit-v1.1.0-omarchy-stable-20260910/QUALIFICATION.md) and [Cua #3698](https://github.com/trycua/cua/pull/3698). Omabot replay and Omarchy's merge decision are recorded in [omarchy-pkgs #346](https://github.com/omacom/omarchy-pkgs/pull/346). Scheduling the recipe does not expand the qualified stable target.
+This package targets **Omarchy x86_64**, with Inkscape `1.4.4-6` and two independent background-input lanes. Release `0.32.0-3` is an edge candidate built from the plugin source published with Driver `0.32.0`, paired with `cua-driver-bin` `0.28.2`. That source carries the independent agent keymaps and compatible Num Lock handling that releases `0.26.1-5` through `0.28.2-2` applied as an Omarchy patch; this release applies a smaller one, `downstream.patch`, so foreground typing keeps working with modifier and Compose remaps (see *Keyboard behavior*) and so that, with its guard active, restarting fcitx5 does not crash Hyprland (see *Input-method popups*). The upstream native qualification below covers older, unpatched source. Cua's native qualification is recorded in [the kit's qualification record](https://github.com/trycua/cua/releases/download/cua-hyprland-kit-v1.1.0-omarchy-stable-20260910/QUALIFICATION.md) and [Cua #3698](https://github.com/trycua/cua/pull/3698). Omabot replay and Omarchy's merge decision are recorded in [omarchy-pkgs #346](https://github.com/omacom/omarchy-pkgs/pull/346). Scheduling the recipe does not expand the qualified stable target.
 
 The plugin is optional. Cua Driver works independently, and installation does not load the plugin or enable input. The package follows the normal edge-to-RC-to-stable promotion path instead of the fast release ring. Its PKGBUILD limits builds to x86_64. The upstream qualification covers the original stable profile; the updated Aquamarine profile needs its own Omabot validation before promotion.
 
@@ -129,7 +129,7 @@ rollout and qualify any changed pairing explicitly.
 
 The package installs the module at
 `/usr/lib/cua/hyprland/cua-hyprland-plugin.so` and provenance plus the consumer
-verifier under `/usr/share/cua-hyprland-plugin/`. There are no hooks, autoloading,
+verifier under `/usr/share/cua-hyprland-plugin/`. There are no package-manager hooks, autoloading,
 configuration edits, or hot replacement.
 
 Save your work and exit Hyprland before installing, replacing, or removing the
@@ -172,7 +172,7 @@ hyprctl reload
 hyprctl -j cua:status
 ```
 
-Continue only when status reports `keyboard_layout_independent: true`, `foreground_numlock_compatible: true`, input protocol v3, input capability, socket paths, and the expected compositor identity. Do not change `kb_layout`, `kb_options`, or NumLock for background input. If you previously followed the stock-US override instructions, remove only that Cua-specific override and reload to restore your underlying personal settings.
+Continue only when status reports `keyboard_layout_independent: true`, `foreground_numlock_compatible: true`, `ime_popup_guard: true`, input protocol v3, input capability, socket paths, and the expected compositor identity. Do not change `kb_layout`, `kb_options`, or NumLock for background input. If you previously followed the stock-US override instructions, remove only that Cua-specific override and reload to restore your underlying personal settings.
 
 Start Driver with `CUA_DRIVER_RS_ENABLE_WAYLAND=1`. In a new disposable Inkscape document, test an admitted background key operation and pointer operation, then verify the result in both a fresh snapshot and a saved/reopened SVG. Driver text-route restrictions still apply. Never test against an existing document or automatically replay an action with a partial or unknown outcome.
 
