@@ -8,7 +8,6 @@ pkgdesc='Pick the Piper or Kokoro voice that reads Claude Code replies aloud, an
 arch=('x86_64')
 url='https://github.com/mattwolfgang/talkback'
 license=('MIT')
-install='talkback.install'
 options=('!debug')
 depends=(
   'alsa-utils'
